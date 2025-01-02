@@ -7,6 +7,9 @@ import pickle
 import json
 import random
 
+nltk.download('punkt_tab')
+nltk.download('wordnet')
+
 # Load the trained model and related data
 try:
     model = load_model('./model.h5')
