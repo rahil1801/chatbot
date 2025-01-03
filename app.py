@@ -1,19 +1,14 @@
 import streamlit as st
 import nltk
 import numpy as np
-from tensorflow.keras.models import load_model  # Use TensorFlow's Keras
+from keras.models import load_model
 from nltk.stem import WordNetLemmatizer
 import pickle
 import json
 import random
 
 # Load the trained model and related data
-try:
-    model = load_model('./model.h5')
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()  # Stop the app if the model fails to load
-
+model = load_model('./model.h5')
 words = pickle.load(open('./texts.pkl', 'rb'))
 classes = pickle.load(open('./labels.pkl', 'rb'))
 with open('./intents.json') as file:
@@ -62,93 +57,71 @@ def chatbot_response(user_input):
         return "I didn't understand that. Could you please rephrase?"
 
 # Streamlit UI Configuration
-st.set_page_config(
-    page_title="Chatbot Assistant",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+st.set_page_config(page_title="Chatbot", layout="centered")
+
+# Sidebar Menu
+st.sidebar.title("Menu")
+menu_option = st.sidebar.radio(
+    "Choose an option:",
+    ("Chatbot", "Conversation History", "About the Chatbot")
 )
 
-# Custom CSS for styling
-st.markdown("""
-    <style>
-    .stApp {
-        background-color: #f5f5f5;
-    }
-    .stTextInput input {
-        border-radius: 10px;
-        padding: 10px;
-    }
-    .stButton button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-    .stSidebar {
-        background-color: #2c3e50;
-        color: white;
-    }
-    .stMarkdown {
-        color: black;
-    }
-    .chat-history {
-        background-color: #34495e;
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }
-    .chat-history:hover {
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Initialize chat history in session state
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = []
 
-# Title
-st.title("🤖 Chatbot Assistant")
+# Chatbot UI
+if menu_option == "Chatbot":
+    st.title("Talk Data to Me")
+    st.markdown("Type a message below to interact with the chatbot.")
 
-# Sidebar for Conversation History
-with st.sidebar:
-    st.title("Conversation History")
-    if 'chat_history' not in st.session_state:
-        st.session_state['chat_history'] = []
+    user_input = st.text_input("Type your message", "", key="user_input")
+    if st.button("Send"):
+        if user_input:
+            # Get response from the chatbot
+            response = chatbot_response(user_input)
 
-    # Display chat history in a hoverable dialog box
+            # Update chat history
+            st.session_state['chat_history'].append({"user": user_input, "bot": response})
+
+    # Display chat history
     for chat in st.session_state['chat_history']:
-        with st.container():
-            st.markdown(
-                f"""
-                <div class="chat-history">
-                    <strong>You:</strong> {chat['user']}<br>
-                    <strong>Bot:</strong> {chat['bot']}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        st.markdown(f"**You:** {chat['user']}")
+        st.markdown(f"**Bot:** {chat['bot']}")
 
-    # Clear chat button
-    if st.button("Clear Chat History", key="clear_chat"):
-        st.session_state['chat_history'] = []
+# Conversation History
+elif menu_option == "Conversation History":
+    st.title("Conversation History")
+    if st.session_state['chat_history']:
+        for chat in st.session_state['chat_history']:
+            st.markdown(f"**You:** {chat['user']}")
+            st.markdown(f"**Bot:** {chat['bot']}")
+        
+        # Clear chat history button
+        if st.button("Clear History"):
+            st.session_state['chat_history'] = []
+            st.success("Chat history cleared!")
+    else:
+        st.info("No conversation history available.")
 
-# Main Chat Interface
-# Use a unique key for the text input to reset it
-user_input_key = "user_input_" + str(len(st.session_state.get('chat_history', [])))
-user_input = st.text_input("Type your message here...", "", key=user_input_key)
+# About the Chatbot
+elif menu_option == "About the Chatbot":
+    st.title("About the Chatbot")
+    st.markdown("""
+    ### Intent-Based Chatbot
+    This chatbot is an **intent-based chatbot** designed to understand and respond to user queries based on predefined intents. 
+    It uses natural language processing (NLP) techniques to classify user input into specific intents and generate appropriate responses.
 
-if st.button("Send", key="send_button"):
-    if user_input.strip():
-        # Get response from the chatbot
-        response = chatbot_response(user_input)
+    #### How It Works:
+    1. **Intent Recognition**: The chatbot uses a trained machine learning model to classify user input into one of the predefined intents.
+    2. **Response Generation**: Based on the recognized intent, the chatbot selects a random response from the available options for that intent.
+    3. **Conversation History**: All interactions are stored in a session-based conversation history, which can be viewed or cleared.
 
-        # Update chat history
-        st.session_state['chat_history'].append({"user": user_input, "bot": response})
+    #### Technologies Used:
+    - **Natural Language Toolkit (NLTK)**: For tokenization and lemmatization.
+    - **Keras**: For building and training the intent classification model.
+    - **Streamlit**: For creating the interactive web interface.
 
-        # Rerun to update the UI and reset the input box
-        st.rerun()
-
-# Display the latest chat in the main UI
-if st.session_state['chat_history']:
-    latest_chat = st.session_state['chat_history'][-1]
-    st.markdown(f"**You:** {latest_chat['user']}")
-    st.markdown(f"**Bot:** {latest_chat['bot']}")
+    #### Developer:
+    This chatbot was developed as part of a project to demonstrate the capabilities of intent-based conversational agents.
+    """)
