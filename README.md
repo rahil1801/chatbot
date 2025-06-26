@@ -21,3 +21,9 @@ Text: The user input text.
 Note: If the required packages are outdated or did not accept the newer version, you can manually install the specific packages using:
 
 pip install <package_name>
+
+# LINK TO VISIT THE CHATBOT
+
+URL: https://intent-based-chatbot-rahil1801.streamlit.app/
+
+Note: This is an intent-based chatbot and may answer only according to the intents it is being trained on. Thank You!!!
